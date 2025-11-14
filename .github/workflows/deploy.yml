@@ -2,14 +2,16 @@ name: CI/CD CoffeeHub
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
-
-  # =========================================================
-  #   1) BUILD & PUSH DOCKER IMAGES A GHCR (BACK + FRONT)
-  # =========================================================
+  # ===============================
+  # 1) BUILD & PUSH GHCR
+  # ===============================
   build-push:
     runs-on: ubuntu-latest
 
@@ -17,56 +19,69 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v4
 
-    - name: Log in to GitHub Container Registry
+    - name: Log in to GHCR
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GHCR_PAT }}
 
-    # -------- Backend --------
+    # ---------- Fix nombre de repo en minúsculas ----------
+    - name: Set lowercase repo name
+      id: repo
+      run: echo "repo_lowercase=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
+
+    # ---------- Backend ----------
     - name: Build Backend image
-      run: docker build -t ghcr.io/${{ github.repository }}/backend:latest coffehub/backend
+      run: |
+        docker build -t ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend:latest coffehub/backend
 
     - name: Push Backend image
-      run: docker push ghcr.io/${{ github.repository }}/backend:latest
+      run: docker push ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend:latest
 
-    # -------- Frontend --------
+    # ---------- Frontend ----------
     - name: Build Frontend image
-      run: docker build -t ghcr.io/${{ github.repository }}/frontend:latest coffehub/frontend
+      run: |
+        docker build -t ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/frontend:latest coffehub/frontend
 
     - name: Push Frontend image
-      run: docker push ghcr.io/${{ github.repository }}/frontend:latest
+      run: docker push ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/frontend:latest
 
-  # =========================================================
-  #               2) DEPLOY QA (AUTO)
-  # =========================================================
+  # ===============================
+  # 2) DEPLOY QA (automático)
+  # ===============================
   deploy-qa:
     needs: build-push
     runs-on: ubuntu-latest
-    environment: qa
 
     steps:
-    - name: Deploy Backend QA 🚀
-      run: curl -X POST "${{ secrets.RENDER_BACKEND_QA_HOOK }}"
+    - name: Deploy Backend QA
+      run: |
+        curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_BACKEND_QA_ID }}/deploys" \
+        -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
 
-    - name: Deploy Frontend QA 🚀
-      run: curl -X POST "${{ secrets.RENDER_FRONTEND_QA_HOOK }}"
+    - name: Deploy Frontend QA
+      run: |
+        curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_FRONTEND_QA_ID }}/deploys" \
+        -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
 
-  # =========================================================
-  #               3) DEPLOY PROD (MANUAL APPROVAL)
-  # =========================================================
+  # ===============================
+  # 3) DEPLOY PROD (Manual)
+  # ===============================
   deploy-prod:
     needs: deploy-qa
     runs-on: ubuntu-latest
     environment:
       name: production
       url: https://coffehub-frontend-prod.onrender.com
-      # 🔥 Esto exige APROBACIÓN MANUAL
-      # (lo configuraste desde "Environments")
-    steps:
-    - name: Deploy Backend PROD 🚀🔥
-      run: curl -X POST "${{ secrets.RENDER_BACKEND_PROD_HOOK }}"
 
-    - name: Deploy Frontend PROD 🚀🔥
-      run: curl -X POST "${{ secrets.RENDER_FRONTEND_PROD_HOOK }}"
+    steps:
+    - name: Deploy Backend PROD
+      run: |
+        curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_BACKEND_PROD_ID }}/deploys" \
+        -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
+
+    - name: Deploy Frontend PROD
+      run: |
+        curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_FRONTEND_PROD_ID }}/deploys" \
+        -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
