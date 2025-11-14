@@ -1,0 +1,72 @@
+name: CI/CD CoffeeHub
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  # =========================================================
+  #   1) BUILD & PUSH DOCKER IMAGES A GHCR (BACK + FRONT)
+  # =========================================================
+  build-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_PAT }}
+
+    # -------- Backend --------
+    - name: Build Backend image
+      run: docker build -t ghcr.io/${{ github.repository }}/backend:latest coffehub/backend
+
+    - name: Push Backend image
+      run: docker push ghcr.io/${{ github.repository }}/backend:latest
+
+    # -------- Frontend --------
+    - name: Build Frontend image
+      run: docker build -t ghcr.io/${{ github.repository }}/frontend:latest coffehub/frontend
+
+    - name: Push Frontend image
+      run: docker push ghcr.io/${{ github.repository }}/frontend:latest
+
+  # =========================================================
+  #               2) DEPLOY QA (AUTO)
+  # =========================================================
+  deploy-qa:
+    needs: build-push
+    runs-on: ubuntu-latest
+    environment: qa
+
+    steps:
+    - name: Deploy Backend QA 🚀
+      run: curl -X POST "${{ secrets.RENDER_BACKEND_QA_HOOK }}"
+
+    - name: Deploy Frontend QA 🚀
+      run: curl -X POST "${{ secrets.RENDER_FRONTEND_QA_HOOK }}"
+
+  # =========================================================
+  #               3) DEPLOY PROD (MANUAL APPROVAL)
+  # =========================================================
+  deploy-prod:
+    needs: deploy-qa
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://coffehub-frontend-prod.onrender.com
+      # 🔥 Esto exige APROBACIÓN MANUAL
+      # (lo configuraste desde "Environments")
+    steps:
+    - name: Deploy Backend PROD 🚀🔥
+      run: curl -X POST "${{ secrets.RENDER_BACKEND_PROD_HOOK }}"
+
+    - name: Deploy Frontend PROD 🚀🔥
+      run: curl -X POST "${{ secrets.RENDER_FRONTEND_PROD_HOOK }}"
