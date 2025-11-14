@@ -56,14 +56,14 @@ jobs:
       # E2E TESTS (Playwright)
       # -----------------------------
       - name: Install e2e dependencies
-        working-directory: coffehub/e2e
+        working-directory: e2e
         run: npm install
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
       - name: Run E2E tests
-        working-directory: coffehub/e2e
+        working-directory: e2e
         run: npm test
 
       # (Opcional) Subir reporte HTML de Playwright
@@ -71,7 +71,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: e2e-report
-          path: coffehub/e2e/reports
+          path: e2e/reports
 
 
   # ======================================================
