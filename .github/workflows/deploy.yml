@@ -2,7 +2,7 @@ name: CI/CD CoffeeHub
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
 
@@ -15,6 +15,17 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+
+
+      # -----------------------------
+      # ▶ CREAR .env.test PARA BACKEND
+      # -----------------------------
+      - name: Create .env.test for backend
+        working-directory: coffehub/backend
+        run: |
+          echo "MONGODB_URI=${{ secrets.MONGODB_URI_TEST }}" > .env.test
+          echo "NODE_ENV=test" >> .env.test
+          echo "PORT=4001" >> .env.test
 
 
       # -----------------------------
@@ -54,7 +65,7 @@ jobs:
       - name: Run E2E tests
         working-directory: coffehub/e2e
         run: npm test
-      
+
       # (Opcional) Subir reporte HTML de Playwright
       - name: Upload E2E Report
         uses: actions/upload-artifact@v4
@@ -81,27 +92,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PAT }}
 
+
       # -----------------------------
       # BACKEND IMAGE
       # -----------------------------
       - name: Build backend image
-        run: |
-          docker build -t ghcr.io/${{ github.repository }}/backend:qa coffehub/backend
+        run: docker build -t ghcr.io/${{ github.repository }}/backend:qa coffehub/backend
 
       - name: Push backend image
-        run: |
-          docker push ghcr.io/${{ github.repository }}/backend:qa
+        run: docker push ghcr.io/${{ github.repository }}/backend:qa
+
 
       # -----------------------------
       # FRONTEND IMAGE
       # -----------------------------
       - name: Build frontend image
-        run: |
-          docker build -t ghcr.io/${{ github.repository }}/frontend:qa coffehub/frontend
+        run: docker build -t ghcr.io/${{ github.repository }}/frontend:qa coffehub/frontend
 
       - name: Push frontend image
-        run: |
-          docker push ghcr.io/${{ github.repository }}/frontend:qa
+        run: docker push ghcr.io/${{ github.repository }}/frontend:qa
 
 
   # ======================================================
@@ -132,12 +141,10 @@ jobs:
   deploy-prod:
     needs: deploy-qa
     runs-on: ubuntu-latest
-    
-    # ⭐ Esto habilita la aprobación manual
     environment:
       name: prod
       url: https://coffehub-frontend-prod.onrender.com
-
+      # ⭐ Esto habilita la aprobación manual en GitHub
     steps:
       - name: Deploy Backend PROD
         run: curl -X POST "$RENDER_BACKEND_PROD_HOOK"
