@@ -1,6 +1,22 @@
 import { test, expect } from '@playwright/test';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
+test.beforeAll(async ({ request }) => {
+  console.log("🧹 Limpiando base de datos en QA antes de tests E2E...");
+
+  const listResponse = await request.get(`${BACKEND_URL}/api/products`);
+  if (!listResponse.ok()) return;
+
+  const products = await listResponse.json();
+
+  for (const product of products) {
+    if (product._id) {
+      await request.delete(`${BACKEND_URL}/api/products/${product._id}`);
+    }
+  }
+
+  console.log(`🧼 Base limpia — ${products.length} elementos eliminados`);
+});
 
 test.describe('Integración Frontend-Backend', () => {
 
