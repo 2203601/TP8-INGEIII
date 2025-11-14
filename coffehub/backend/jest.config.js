@@ -1,9 +1,10 @@
 export default {
   testEnvironment: "node",
 
-  // ESM SUPPORT (🔥 esto arregla tu error)
+  // Soporta ESM sin transformaciones
   transform: {},
-  extensionsToTreatAsEsm: [".js"],
+
+  // Necesario para que Jest resuelva imports ESM
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1.js"
   },
@@ -19,7 +20,7 @@ export default {
     "!jest.config.js"
   ],
 
-  // Tests (unit, mocked, integration)
+  // Tests: unit, mocked, integration
   testMatch: [
     "**/tests/unit/**/*.test.js",
     "**/tests/unit-mocked/**/*.test.js",
@@ -29,13 +30,13 @@ export default {
   // Setup
   setupFilesAfterEnv: ["<rootDir>/tests/setup.js"],
 
-  // Stability
+  // Estabilidad
   verbose: true,
   testTimeout: 30000,
   detectOpenHandles: true,
   forceExit: true,
 
-  // Reportes JUnit para CI
+  // Reporte JUnit para el pipeline
   reporters: [
     "default",
     ["jest-junit", { outputDirectory: "./", outputName: "junit.xml" }]
