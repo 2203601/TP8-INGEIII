@@ -1,7 +1,13 @@
 export default {
   testEnvironment: 'node',
+
+
+
+  // No transform: tu backend ya está en ESM puro
+  transform: {},
+
+  // Donde guardar cobertura
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'cobertura'], // ← para Azure
   collectCoverage: true,
   collectCoverageFrom: [
     'server.js',
@@ -10,19 +16,26 @@ export default {
     '!tests/**',
     '!jest.config.js'
   ],
+
+  // Patrón de tests (unit, mocked, integration)
   testMatch: [
     '**/tests/unit/**/*.test.js',
     '**/tests/unit-mocked/**/*.test.js',
     '**/tests/integration/**/*.test.js'
   ],
+
+  // Cargar setup antes de los tests
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+
+  // Tiempos y estabilidad
   testTimeout: 30000,
   verbose: true,
-  transform: {},
   forceExit: true,
   detectOpenHandles: true,
+
+  // Reportes
   reporters: [
     'default',
-    ['jest-junit', { outputDirectory: './', outputName: 'junit.xml' }] // ← para Azure
+    ['jest-junit', { outputDirectory: './', outputName: 'junit.xml' }]
   ]
 };

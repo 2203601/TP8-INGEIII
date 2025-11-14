@@ -1,14 +1,8 @@
-// tests/setup.js
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+// tests/setup.js (CommonJS porque Jest NO soporta ESM aquí)
+const dotenv = require('dotenv');
+const path = require('path');
 
-// Obtener el directorio actual
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Cargar variables de entorno desde .env.test
-dotenv.config({ path: join(__dirname, '../.env.test') });
+dotenv.config({ path: '.env.test' });
 
 // Configuración de entorno
 process.env.NODE_ENV = 'test';
