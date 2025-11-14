@@ -65,20 +65,19 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PAT }}
-
-      # BACKEND
+      # BACKEND IMAGE
       - name: Build backend image
-        run: docker build -t ghcr.io/${{ github.repository }}/backend:qa coffehub/backend
+        run: docker build -t ghcr.io/${{ github.repository_owner }}/tp8-ingeiii-backend:qa coffehub/backend
 
       - name: Push backend image
-        run: docker push ghcr.io/${{ github.repository }}/backend:qa
+        run: docker push ghcr.io/${{ github.repository_owner }}/tp8-ingeiii-backend:qa
 
-      # FRONTEND
+      # FRONTEND IMAGE
       - name: Build frontend image
-        run: docker build -t ghcr.io/${{ github.repository }}/frontend:qa coffehub/frontend
+        run: docker build -t ghcr.io/${{ github.repository_owner }}/tp8-ingeiii-frontend:qa coffehub/frontend
 
       - name: Push frontend image
-        run: docker push ghcr.io/${{ github.repository }}/frontend:qa
+        run: docker push ghcr.io/${{ github.repository_owner }}/tp8-ingeiii-frontend:qa
 
   # ======================================================
   # 3️⃣ DEPLOY QA AUTOMÁTICO + E2E TESTS
