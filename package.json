@@ -14,4 +14,7 @@
     "test:e2e:chrome": "playwright test --project=chromium",
     "test:e2e:report": "playwright show-report e2e/reports",
     "test:e2e:codegen": "playwright codegen http://localhost:8080"}
+
 }
+
+
