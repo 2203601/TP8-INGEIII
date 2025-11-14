@@ -7,7 +7,7 @@ on:
 jobs:
 
   # ======================================================
-  # 1️⃣ BUILD + TEST (UNIT + INTEGRATION + FRONTEND/JEST)
+  # 1️⃣ BUILD + TEST (Backend + Frontend)
   # ======================================================
   build-test:
     runs-on: ubuntu-latest
@@ -38,7 +38,7 @@ jobs:
         run: npm test
 
       # -----------------------------
-      # FRONTEND TESTS (JEST)
+      # FRONTEND TESTS
       # -----------------------------
       - name: Install frontend dependencies
         working-directory: coffehub/frontend
@@ -47,6 +47,7 @@ jobs:
       - name: Run frontend tests
         working-directory: coffehub/frontend
         run: npm test
+
 
   # ======================================================
   # 2️⃣ BUILD + PUSH DOCKER IMAGES (QA)
@@ -65,22 +66,33 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PAT }}
-      # BACKEND IMAGE
+
+      # Normalizamos nombre repo (ghcr exige lowercase)
+      - name: Sanitize repo name
+        id: repo
+        run: echo "repo_lower=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      # -----------------------------
+      # BACKEND IMAGE (QA)
+      # -----------------------------
       - name: Build backend image
-        run: docker build -t ghcr.io/${{ github.repository_owner }}/tp8-ingeiii-backend:qa coffehub/backend
+        run: docker build -t ghcr.io/${{ steps.repo.outputs.repo_lower }}/backend:qa coffehub/backend
 
       - name: Push backend image
-        run: docker push ghcr.io/${{ github.repository_owner }}/tp8-ingeiii-backend:qa
+        run: docker push ghcr.io/${{ steps.repo.outputs.repo_lower }}/backend:qa
 
-      # FRONTEND IMAGE
+      # -----------------------------
+      # FRONTEND IMAGE (QA)
+      # -----------------------------
       - name: Build frontend image
-        run: docker build -t ghcr.io/${{ github.repository_owner }}/tp8-ingeiii-frontend:qa coffehub/frontend
+        run: docker build -t ghcr.io/${{ steps.repo.outputs.repo_lower }}/frontend:qa coffehub/frontend
 
       - name: Push frontend image
-        run: docker push ghcr.io/${{ github.repository_owner }}/tp8-ingeiii-frontend:qa
+        run: docker push ghcr.io/${{ steps.repo.outputs.repo_lower }}/frontend:qa
+
 
   # ======================================================
-  # 3️⃣ DEPLOY QA AUTOMÁTICO + E2E TESTS
+  # 3️⃣ DEPLOY QA AUTOMÁTICO + E2E TESTS CONTRA QA
   # ======================================================
   deploy-qa:
     needs: build-push
@@ -90,9 +102,6 @@ jobs:
       url: https://coffehub-frontend-qa.onrender.com
 
     steps:
-      # -----------------------------
-      # DEPLOY A QA
-      # -----------------------------
       - name: Deploy Backend QA
         run: curl -X POST "$RENDER_BACKEND_QA_HOOK"
         env:
@@ -103,19 +112,13 @@ jobs:
         env:
           RENDER_FRONTEND_QA_HOOK: ${{ secrets.RENDER_FRONTEND_QA_HOOK }}
 
-      # -----------------------------
-      # 🌐 ESPERAR QUE QA ESTE ARRIBA
-      # -----------------------------
+      # Esperamos un poco a que Render levante
       - name: Wait for QA environment
-        run: |
-          for i in {1..20}; do
-            curl -I https://coffehub-frontend-qa.onrender.com && break
-            echo "QA no responde todavía, esperando..."
-            sleep 10
-          done
+        run: sleep 60
+
 
       # -----------------------------
-      # ▶ E2E TESTS CONTRA QA
+      # E2E TESTS CONTRA QA
       # -----------------------------
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -125,13 +128,14 @@ jobs:
         run: npm install
 
       - name: Install Playwright browsers
+        working-directory: e2e
         run: npx playwright install --with-deps
 
       - name: Run E2E tests against QA
         working-directory: e2e
         env:
-          FRONTEND_QA_URL: "https://coffehub-frontend-qa.onrender.com"
-          BACKEND_QA_URL: "https://coffehub-backend-qa.onrender.com"
+          FRONTEND_URL: "https://coffehub-frontend-qa.onrender.com"
+          BACKEND_URL: "https://coffehub-backend-qa.onrender.com"
         run: npm test
 
       - name: Upload E2E Report
@@ -140,8 +144,9 @@ jobs:
           name: e2e-report
           path: e2e/reports
 
+
   # ======================================================
-  # 4️⃣ DEPLOY PROD (manual approval)
+  # 4️⃣ DEPLOY PROD (MANUAL APPROVAL)
   # ======================================================
   deploy-prod:
     needs: deploy-qa
