@@ -195,6 +195,8 @@ const allowedOrigins = [
   "http://localhost:4000",
   "https://coffeehub-front-qa-argqggbvc3g0gkdc.brazilsouth-01.azurewebsites.net",
   "https://coffeehub-front-prod-hgh2ehb7bzchh4ft.brazilsouth-01.azurewebsites.net",
+  'https://coffehub-frontend-qa.onrender.com',
+  'https://coffeehub-frontend-prod.onrender.com'
 ];
 
 app.use(cors({
