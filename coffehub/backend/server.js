@@ -205,11 +205,10 @@ const allowedOrigins = [
 
 
 app.use(cors({
-  origin: function (origin, callback) {
+  origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    
     console.warn(`CORS bloqueado para: ${origin}`);
     return callback(new Error(`CORS no permitido para: ${origin}`));
   },
@@ -218,7 +217,6 @@ app.use(cors({
   credentials: true,
 }));
 
-app.options('*', cors());
 app.use(express.json());
 
 // ================================
