@@ -1,41 +1,43 @@
 export default {
-  testEnvironment: 'node',
+  testEnvironment: "node",
 
-
-
-  // No transform: tu backend ya está en ESM puro
+  // ESM SUPPORT (🔥 esto arregla tu error)
   transform: {},
+  extensionsToTreatAsEsm: [".js"],
+  moduleNameMapper: {
+    "^(\\.{1,2}/.*)\\.js$": "$1.js"
+  },
 
-  // Donde guardar cobertura
-  coverageDirectory: 'coverage',
+  // Coverage
+  coverageDirectory: "coverage",
   collectCoverage: true,
   collectCoverageFrom: [
-    'server.js',
-    '!node_modules/**',
-    '!coverage/**',
-    '!tests/**',
-    '!jest.config.js'
+    "server.js",
+    "!node_modules/**",
+    "!coverage/**",
+    "!tests/**",
+    "!jest.config.js"
   ],
 
-  // Patrón de tests (unit, mocked, integration)
+  // Tests (unit, mocked, integration)
   testMatch: [
-    '**/tests/unit/**/*.test.js',
-    '**/tests/unit-mocked/**/*.test.js',
-    '**/tests/integration/**/*.test.js'
+    "**/tests/unit/**/*.test.js",
+    "**/tests/unit-mocked/**/*.test.js",
+    "**/tests/integration/**/*.test.js"
   ],
 
-  // Cargar setup antes de los tests
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+  // Setup
+  setupFilesAfterEnv: ["<rootDir>/tests/setup.js"],
 
-  // Tiempos y estabilidad
-  testTimeout: 30000,
+  // Stability
   verbose: true,
-  forceExit: true,
+  testTimeout: 30000,
   detectOpenHandles: true,
+  forceExit: true,
 
-  // Reportes
+  // Reportes JUnit para CI
   reporters: [
-    'default',
-    ['jest-junit', { outputDirectory: './', outputName: 'junit.xml' }]
+    "default",
+    ["jest-junit", { outputDirectory: "./", outputName: "junit.xml" }]
   ]
 };
