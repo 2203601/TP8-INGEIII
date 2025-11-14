@@ -21,11 +21,58 @@ export function setEditingCoffeeId(id) {
 // 🔹 Backend URL
 // -----------------------------
 export function getBackendURL() {
-  if (window.BACKEND_URL) return window.BACKEND_URL;
-  return "http://localhost:4000"; // fallback
+  // 1. Si Render inyecta la variable → usar esa siempre
+  if (typeof window !== "undefined" && window.BACKEND_URL) {
+    return window.BACKEND_URL;
+  }
+
+  // 2. Si estamos corriendo tests en JSDOM / Node
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+
+  // QA (hostname simulado en los tests)
+  if (hostname.includes("qa")) {
+    return "https://coffehub-backend-qa.onrender.com";
+  }
+
+  // PROD (hostname simulado en los tests)
+  if (hostname.includes("prod")) {
+    return "https://coffehub-backend-prod.onrender.com";
+  }
+
+  // Localhost (dev)
+  if (hostname.includes("localhost")) {
+    return "http://localhost:4000";
+  }
+
+  // Fallback → QA
+  return "https://coffehub-backend-qa.onrender.com";
+}export function getBackendURL() {
+  // 1. Si Render inyecta la variable → usar esa siempre
+  if (typeof window !== "undefined" && window.BACKEND_URL) {
+    return window.BACKEND_URL;
+  }
+
+  // 2. Si estamos corriendo tests en JSDOM / Node
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+
+  // QA (hostname simulado en los tests)
+  if (hostname.includes("qa")) {
+    return "https://coffehub-backend-qa.onrender.com";
+  }
+
+  // PROD (hostname simulado en los tests)
+  if (hostname.includes("prod")) {
+    return "https://coffehub-backend-prod.onrender.com";
+  }
+
+  // Localhost (dev)
+  if (hostname.includes("localhost")) {
+    return "http://localhost:4000";
+  }
+
+  // Fallback → QA
+  return "https://coffehub-backend-qa.onrender.com";
 }
-
-
 // -----------------------------
 // 🔹 Formulario
 // -----------------------------
