@@ -7,7 +7,7 @@ on:
 jobs:
 
   # ======================================================
-  # 1️⃣ BUILD + TEST (QA)
+  # 1️⃣ BUILD + TEST (UNIT + INTEGRATION + FRONTEND/JEST)
   # ======================================================
   build-test:
     runs-on: ubuntu-latest
@@ -15,7 +15,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
 
       # -----------------------------
       # ▶ CREAR .env.test PARA BACKEND
@@ -27,9 +26,8 @@ jobs:
           echo "NODE_ENV=test" >> .env.test
           echo "PORT=4001" >> .env.test
 
-
       # -----------------------------
-      # BACKEND TESTS (unit + integration)
+      # BACKEND TESTS
       # -----------------------------
       - name: Install backend dependencies
         working-directory: coffehub/backend
@@ -39,9 +37,8 @@ jobs:
         working-directory: coffehub/backend
         run: npm test
 
-
       # -----------------------------
-      # FRONTEND TESTS (Jest)
+      # FRONTEND TESTS (JEST)
       # -----------------------------
       - name: Install frontend dependencies
         working-directory: coffehub/frontend
@@ -50,29 +47,6 @@ jobs:
       - name: Run frontend tests
         working-directory: coffehub/frontend
         run: npm test
-
-
-      # -----------------------------
-      # E2E TESTS (Playwright)
-      # -----------------------------
-      - name: Install e2e dependencies
-        working-directory: e2e
-        run: npm install
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-
-      - name: Run E2E tests
-        working-directory: e2e
-        run: npm test
-
-      # (Opcional) Subir reporte HTML de Playwright
-      - name: Upload E2E Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: e2e-report
-          path: e2e/reports
-
 
   # ======================================================
   # 2️⃣ BUILD + PUSH DOCKER IMAGES (QA)
@@ -92,29 +66,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PAT }}
 
-
-      # -----------------------------
-      # BACKEND IMAGE
-      # -----------------------------
+      # BACKEND
       - name: Build backend image
         run: docker build -t ghcr.io/${{ github.repository }}/backend:qa coffehub/backend
 
       - name: Push backend image
         run: docker push ghcr.io/${{ github.repository }}/backend:qa
 
-
-      # -----------------------------
-      # FRONTEND IMAGE
-      # -----------------------------
+      # FRONTEND
       - name: Build frontend image
         run: docker build -t ghcr.io/${{ github.repository }}/frontend:qa coffehub/frontend
 
       - name: Push frontend image
         run: docker push ghcr.io/${{ github.repository }}/frontend:qa
 
-
   # ======================================================
-  # 3️⃣ DEPLOY QA AUTOMÁTICO
+  # 3️⃣ DEPLOY QA AUTOMÁTICO + E2E TESTS
   # ======================================================
   deploy-qa:
     needs: build-push
@@ -122,8 +89,11 @@ jobs:
     environment:
       name: qa
       url: https://coffehub-frontend-qa.onrender.com
-      
+
     steps:
+      # -----------------------------
+      # DEPLOY A QA
+      # -----------------------------
       - name: Deploy Backend QA
         run: curl -X POST "$RENDER_BACKEND_QA_HOOK"
         env:
@@ -134,9 +104,45 @@ jobs:
         env:
           RENDER_FRONTEND_QA_HOOK: ${{ secrets.RENDER_FRONTEND_QA_HOOK }}
 
+      # -----------------------------
+      # 🌐 ESPERAR QUE QA ESTE ARRIBA
+      # -----------------------------
+      - name: Wait for QA environment
+        run: |
+          for i in {1..20}; do
+            curl -I https://coffehub-frontend-qa.onrender.com && break
+            echo "QA no responde todavía, esperando..."
+            sleep 10
+          done
+
+      # -----------------------------
+      # ▶ E2E TESTS CONTRA QA
+      # -----------------------------
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install E2E dependencies
+        working-directory: e2e
+        run: npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run E2E tests against QA
+        working-directory: e2e
+        env:
+          FRONTEND_QA_URL: "https://coffehub-frontend-qa.onrender.com"
+          BACKEND_QA_URL: "https://coffehub-backend-qa.onrender.com"
+        run: npm test
+
+      - name: Upload E2E Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: e2e/reports
 
   # ======================================================
-  # 4️⃣ DEPLOY PROD (REQUIERE APROBACIÓN MANUAL)
+  # 4️⃣ DEPLOY PROD (manual approval)
   # ======================================================
   deploy-prod:
     needs: deploy-qa
@@ -144,7 +150,7 @@ jobs:
     environment:
       name: prod
       url: https://coffehub-frontend-prod.onrender.com
-      # ⭐ Esto habilita la aprobación manual en GitHub
+
     steps:
       - name: Deploy Backend PROD
         run: curl -X POST "$RENDER_BACKEND_PROD_HOOK"
