@@ -1,20 +1,25 @@
-// tests/setup.js (CommonJS porque Jest NO soporta ESM aquí)
-const dotenv = require('dotenv');
-const path = require('path');
+// tests/setup.js  (ESM compatible con Jest)
 
-dotenv.config({ path: '.env.test' });
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
-// Configuración de entorno
-process.env.NODE_ENV = 'test';
-process.env.PORT = process.env.PORT || '4001';
+// Simular __dirname porque ESM no lo tiene nativo
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// Verificar que MONGODB_URI esté definida
+// Cargar archivo .env.test
+dotenv.config({ path: `${__dirname}/../.env.test` });
+
+process.env.NODE_ENV = "test";
+process.env.PORT = process.env.PORT || "4001";
+
 if (!process.env.MONGODB_URI) {
-  console.error('❌ ERROR: MONGODB_URI no está definida en .env.test');
+  console.error("❌ ERROR: MONGODB_URI no está definida en .env.test");
   process.exit(1);
 }
 
-console.log('✅ Variables de entorno cargadas correctamente');
-console.log('📝 NODE_ENV:', process.env.NODE_ENV);
-console.log('📝 PORT:', process.env.PORT);
-console.log('📝 MONGODB_URI:', process.env.MONGODB_URI ? 'Definida ✅' : 'No definida ❌');
+console.log("✅ Variables de entorno cargadas correctamente");
+console.log("📝 NODE_ENV:", process.env.NODE_ENV);
+console.log("📝 PORT:", process.env.PORT);
+console.log("📝 MONGODB_URI:", process.env.MONGODB_URI ? "Definida ✅" : "No definida ❌");
