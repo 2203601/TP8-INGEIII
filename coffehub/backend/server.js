@@ -193,11 +193,16 @@ function sanitizeProduct(productData) {
 const allowedOrigins = [
   "http://localhost:8080",
   "http://localhost:4000",
-  "https://coffeehub-front-qa-argqggbvc3g0gkdc.brazilsouth-01.azurewebsites.net",
-  "https://coffeehub-front-prod-hgh2ehb7bzchh4ft.brazilsouth-01.azurewebsites.net",
-  'https://coffehub-frontend-qa.onrender.com',
-  'https://coffeehub-frontend-prod.onrender.com'
+
+  // Render QA (frontend y backend)
+  "https://coffehub-frontend-qa.onrender.com",
+  "https://coffehub-backend-qa.onrender.com",
+
+  // Render PROD (cuando lo crees)
+  "https://coffehub-frontend-prod.onrender.com",
+  "https://coffehub-backend-prod.onrender.com"
 ];
+
 
 app.use(cors({
   origin: function (origin, callback) {
