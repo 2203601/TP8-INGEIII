@@ -53,30 +53,31 @@ afterEach(() => {
 // -----------------------------
 // 🔹 Tests Adicionales
 // -----------------------------
-describe('getBackendURL()', () => {
+describe('CoffeeHub Frontend - Tests Adicionales', () => {
 
-  test('debe retornar localhost URL cuando hostname incluye localhost', () => {
-    window.location.hostname = 'localhost';
-    expect(appModule.getBackendURL()).toBe('http://localhost:4000');
+  describe('getBackendURL()', () => {
+
+    test('debe retornar localhost URL cuando hostname incluye localhost', () => {
+      window.location.hostname = 'localhost';
+      expect(appModule.getBackendURL()).toBe('http://localhost:4000');
+    });
+  
+    test('debe retornar QA URL cuando hostname incluye qa', () => {
+      window.location.hostname = 'coffehub-frontend-qa.onrender.com';
+      expect(appModule.getBackendURL()).toBe('https://coffehub-backend-qa.onrender.com');
+    });
+  
+    test('debe retornar PROD URL cuando hostname incluye prod', () => {
+      window.location.hostname = 'coffehub-frontend-prod.onrender.com';
+      expect(appModule.getBackendURL()).toBe('https://coffehub-backend-prod.onrender.com');
+    });
+  
+    test('debe retornar QA URL como fallback para otros hostnames', () => {
+      window.location.hostname = 'example.com';
+      expect(appModule.getBackendURL()).toBe('https://coffehub-backend-qa.onrender.com');
+    });
+  
   });
-
-  test('debe retornar QA URL cuando hostname incluye qa', () => {
-    window.location.hostname = 'coffehub-frontend-qa.onrender.com';
-    expect(appModule.getBackendURL()).toBe('https://coffehub-backend-qa.onrender.com');
-  });
-
-  test('debe retornar PROD URL cuando hostname incluye prod', () => {
-    window.location.hostname = 'coffehub-frontend-prod.onrender.com';
-    expect(appModule.getBackendURL()).toBe('https://coffehub-backend-prod.onrender.com');
-  });
-
-  test('debe retornar QA URL como fallback para otros hostnames', () => {
-    window.location.hostname = 'example.com';
-    expect(appModule.getBackendURL()).toBe('https://coffehub-backend-qa.onrender.com');
-  });
-
-});
-
 
   // Tests para deleteCoffee()
   describe('deleteCoffee()', () => {
